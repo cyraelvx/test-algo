@@ -20,11 +20,14 @@ import yfinance
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
+import plotly.io as pio
+pio.renderers.default = "browser"
+
 # Obtaining historical stock pricing data
 ticker_symbol = 'AMD'
 ticker = yfinance.Ticker(ticker_symbol)
 
-start_date = '2021-11-01'
+start_date = '2020-08-01'
 end_date = '2022-01-14'
 
 df = ticker.history(interval='1d', start=start_date, end=end_date)
@@ -54,15 +57,23 @@ def support(df1, candle, days_before1, days_after1): #n1 n2 before and after can
 
 def resistance(df1, candle, days_before1, days_after1): #days_before, days_after the candle l
     for i in range(candle-days_before1+1, candle+1):
-        if(df1.High[i]<df1.High[i-1]):
+        print(f'i is: {i}')
+        print(f'df1.High[i] is: {df1.High[i]}')
+        print(f'df1.High[i-1] is: {df1.High[i-1]}')
+
+        if df1.High[i] < df1.High[i-1]:
             return 0
     for i in range(candle+1,candle+days_after1+1):
-        if(df1.High[i]>df1.High[i-1]):
+
+        if df1.High[i] > df1.High[i-1]:
             return 0
     return 1
-#resistance(df, 30, 3, 5)
 
-dfpl = df[0:50]
+
+# resistance(df, 30, 3, 5)
+
+
+dfpl = df[0:250]
 import plotly.graph_objects as go
 from datetime import datetime
 
@@ -78,8 +89,35 @@ sr = []
 days_before=3
 days_after=2
 for row in range(3, 205): #len(df)-n2
+    print(f'row is {row}')
+    print(f'support is :{support(df, row, days_before, days_after)}')
     if support(df, row, days_before, days_after):
         sr.append((row,df.Low[row],1))
+    print(f'resistance is :{resistance(df, row, days_before, days_after)}')
     if resistance(df, row, days_before, days_after):
         sr.append((row,df.High[row],2))
 print(sr)
+
+
+s = 0
+e = 200
+dfpl = df[s:e]
+import plotly.graph_objects as go
+from datetime import datetime
+import matplotlib.pyplot as plt
+fig = go.Figure(data=[go.Candlestick(x=dfpl.index,
+                open=dfpl['Open'],
+                high=dfpl['High'],
+                low=dfpl['Low'],
+                close=dfpl['Close'])])
+
+c=0
+while (1):
+    if(c>len(sr)-1 ):#or sr[c][0]>e
+        break
+    fig.add_shape(type='line', x0=s, y0=sr[c][1],
+                  x1=e,
+                  y1=sr[c][1]
+                  )#x0=sr[c][0]-5 x1=sr[c][0]+5
+    c+=1
+fig.show()
