@@ -252,8 +252,8 @@ for idx, tuple in enumerate(ss_rr):
     # print(candle, price)
     for indx2 in range(0,idx):
         candle_last, price_last, string_s_r_last = ss_rr[indx2]
-        high_range = price* 1.02
-        lower_range = price* 0.98
+        high_range = price* 1.01
+        lower_range = price* 0.99
 
         if (candle - candle_last) < 30:
             if (price_last <= high_range) & (price_last >= lower_range):
@@ -265,14 +265,14 @@ for idx, tuple in enumerate(ss_rr):
 # double check pik
 # if a pik is in the middle of downtrend or uptrend
 new_list_pik_2 = []
-n_before = 6
-n_after = 6
+n_before = 5
+n_after = 5
 list_fake = []
 for idx, tuple in enumerate(new_list_pik):
     if idx == 0 :
         continue
     print(idx, tuple)
-    candle, price, string_s_r = ss_rr[idx]
+    candle, price, string_s_r = new_list_pik[idx]
     if string_s_r == 'r':  # its a support pik
         price_n_befor = df.High[candle - n_before]
         price_n_after = df.High[candle + n_after]
@@ -292,6 +292,23 @@ for idx, tuple in enumerate(new_list_pik):
     else:
         new_list_pik_2.append((candle, price, string_s_r))
 # --------------------------------------------
+# # plot last list
+# c=0
+# while (1):
+#     if(c>len(new_list_pik)-1 ):
+#         break
+#     # print(new_list_pik[c][0])
+#     # print(new_list_pik[c][1])
+#
+#     fig.add_shape(type='line', x0=new_list_pik[c][0], y0=new_list_pik[c][1],
+#                   x1=new_list_pik[c][0] - 30,
+#                   y1=new_list_pik[c][1],
+#                   line=dict(color="RoyalBlue",width=1)
+#                   )
+#     c+=1
+#
+# fig.show()
+
 # plot last list
 c=0
 while (1):
