@@ -185,13 +185,15 @@ def resistance(df1, candle, days_before1, days_after1): #days_before, days_after
 
 ss = []
 rr = []
+ss_rr = []
 n1=2
 n2=2
-for row in range(4, 205): #len(df)-n2
+for row in range(n2, 205): #len(df)-n2
+
     if support(df, row, n1, n2):
-        ss.append((row,df.Low[row]))
+        ss_rr.append((row,df.Low[row],'s'))
     if resistance(df, row, n1, n2):
-        rr.append((row,df.High[row]))
+        ss_rr.append((row,df.High[row],'r'))
 
 # -----------------------------------------------
 s = 0
@@ -206,32 +208,120 @@ fig = go.Figure(data=[go.Candlestick(x=dfpl.index,
                 high=dfpl['High'],
                 low=dfpl['Low'],
                 close=dfpl['Close'])])
+#
+# c=0
+# while (1):
+#     if(c>len(ss)-1 ):
+#         break
+#     fig.add_shape(type='line', x0=ss[c][0], y0=ss[c][1],
+#                   x1=rr[c][0] -30,
+#                   y1=ss[c][1],
+#                   line=dict(color="MediumPurple",width=1)
+#                   )
+#     c+=1
+#
+# c=0
+# while (1):
+#     if(c>len(rr)-1 ):
+#         break
+#     print(rr[c][0])
+#     print(rr[c][1])
+#
+#     fig.add_shape(type='line', x0=rr[c][0], y0=rr[c][1],
+#                   x1=rr[c][0] - 30,
+#                   y1=rr[c][1],
+#                   line=dict(color="RoyalBlue",width=1)
+#                   )
+#     c+=1
+#
+# fig.show()
 
+# ---------------------------------------------------------------------
+# check if pik has close pik at least 30 days away
+new_list_pik = []
+list_two_pikes = []
+for idx, tuple in enumerate(ss_rr):
+
+    # start from the second pik
+    if idx==0:
+        continue
+    # index_before = 1
+    # print(idx, tuple)
+    # print(rr[idx])
+    candle, price,string_s_r = ss_rr[idx]
+    # print(candle, price)
+    for indx2 in range(0,idx):
+        candle_last, price_last, string_s_r_last = ss_rr[indx2]
+        high_range = price* 1.01
+        lower_range = price* 0.99
+
+        if (candle - candle_last) < 30:
+            if (price_last <= high_range) & (price_last >= lower_range):
+                new_list_pik.append((candle_last, price_last,string_s_r_last))
+                new_list_pik.append((candle, price,string_s_r))
+                list_two_pikes.append((idx,indx2))
+
+# --------------------------------------------------
+# double check pik
+# if a pik is in the middle of downtrend or uptrend
+new_list_pik_2 = []
+n_before = 5
+n_after = 5
+list_fake = []
+for idx, tuple in enumerate(new_list_pik):
+    if idx == 0 :
+        continue
+    print(idx, tuple)
+    candle, price, string_s_r = new_list_pik[idx]
+    if string_s_r == 'r':  # its a support pik
+        price_n_befor = df.High[candle - n_before]
+        price_n_after = df.High[candle + n_after]
+    else:
+        price_n_befor = df.Low[candle - n_before]
+        price_n_after = df.Low[candle + n_after]
+    print(price_n_befor)
+    print(price_n_after)
+    if (price_n_befor >= price) & (price_n_after <= price) : #its not support -
+        print(f'point {candle} is not {string_s_r} its a stop in down-trand')
+        list_fake.append(candle)
+        # new_list_pik_2.remove(idx)
+    elif (price_n_befor <= price) & (price_n_after >= price):
+        print(f'point {candle} is not {string_s_r} its a stop in up-trand')
+        list_fake.append(candle)
+        # new_list_pik_2.remove(idx)
+    else:
+        new_list_pik_2.append((candle, price, string_s_r))
+# --------------------------------------------
+# # plot last list
+# c=0
+# while (1):
+#     if(c>len(new_list_pik)-1 ):
+#         break
+#     # print(new_list_pik[c][0])
+#     # print(new_list_pik[c][1])
+#
+#     fig.add_shape(type='line', x0=new_list_pik[c][0], y0=new_list_pik[c][1],
+#                   x1=new_list_pik[c][0] - 30,
+#                   y1=new_list_pik[c][1],
+#                   line=dict(color="RoyalBlue",width=1)
+#                   )
+#     c+=1
+#
+# fig.show()
+
+# plot last list
 c=0
 while (1):
-    if(c>len(ss)-1 ):
+    if(c>len(new_list_pik_2)-1 ):
         break
-    fig.add_shape(type='line', x0=ss[c][0], y0=ss[c][1],
-                  x1=rr[c][0] -30,
-                  y1=ss[c][1],
-                  line=dict(color="MediumPurple",width=1)
-                  )
-    c+=1
+    # print(new_list_pik[c][0])
+    # print(new_list_pik[c][1])
 
-c=0
-while (1):
-    if(c>len(rr)-1 ):
-        break
-    print(rr[c][0])
-    print(rr[c][1])
-
-    fig.add_shape(type='line', x0=rr[c][0], y0=rr[c][1],
-                  x1=rr[c][0] - 30,
-                  y1=rr[c][1],
+    fig.add_shape(type='line', x0=new_list_pik_2[c][0], y0=new_list_pik_2[c][1],
+                  x1=new_list_pik_2[c][0] - 30,
+                  y1=new_list_pik_2[c][1],
                   line=dict(color="RoyalBlue",width=1)
                   )
     c+=1
 
 fig.show()
-
-# ---------------------------------------------------------------------
