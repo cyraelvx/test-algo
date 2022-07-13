@@ -27,8 +27,6 @@ df = ticker.history(interval='1h', start=start_date, end=end_date)
 
 df['Date'] = pd.to_datetime(df.index)
 
-
-
 #Check if NA values are in data
 # df=df[df['volume']!=0]
 df.reset_index(drop=True, inplace=True)
@@ -37,9 +35,11 @@ df.reset_index(drop=True, inplace=True)
 
 min_price = df.Low.min()
 max_price = df.High.max()
+touches_min = 6
+touches_max = 9
 list_prices = []
 list_all_touches = []
-for price in range(int(min_price),int(max_price)):
+for price in range(int(min_price), int(max_price)):
 
     price_counter = 0
     ind_counter = 0
@@ -47,15 +47,14 @@ for price in range(int(min_price),int(max_price)):
         if ind_counter == 0:
             first_ind = ind + 1
 
-
         if (price >= row['Low']) & (price <= row['High']):
             ind_counter = 1
             price_counter = price_counter + 1
-            list_all_touches.append((ind, price, price_counter))
+            list_all_touches.append((price, price_counter, ind))
 
         if ind > (first_ind + 300):
             break
-    list_prices.append((price,price_counter))
+    list_prices.append((price, price_counter, ind))
 
 s = 0
 e = 780
@@ -72,24 +71,34 @@ fig = go.Figure(data=[go.Candlestick(x=dfpl.index,
 
 
 # plot last list
-c=0
-while (1):
-    if(c>len(list_prices)-1 ):
-        break
+c = 0
+while c <= len(list_prices) - 1:
     # print(list_prices[c][0])
     # print(list_prices[c][1])
     number_of_touch = list_prices[c][1]
     print()
-    if (number_of_touch >= 6) & (number_of_touch <= 9):
+    if (number_of_touch >= touches_min) & (number_of_touch <= touches_max):
         fig.add_shape(type='line', x0=0, y0=list_prices[c][0],
                       x1=e,
                       y1=list_prices[c][0],
-                      line=dict(color="RoyalBlue",width=1)
+                      line=dict(color="RoyalBlue", width=1)
                       )
-    c+=1
+    c += 1
 
-# c=0
-# while (1):
+c = 0
+while c <= len(list_prices) - 1:
+    # print(list_prices[c][0])
+    # print(list_prices[c][1])
+    number_of_touch = list_prices[c][1]
+    print()
+    if (number_of_touch >= touches_min) & (number_of_touch <= touches_max):
+        fig.add_shape(type='line', x0=list_prices[c][2], y0=list_prices[c][0],
+                      x1=list_prices[c][2] + 0.2,
+                      y1=list_prices[c][0],
+                      line=dict(color="magenta", width=3)
+                      )
+    c += 1
+
 #     if (c > len(list_all_touches) - 1):
 #         break
 #     number_of_touch = list_all_touches[c][2]
