@@ -72,7 +72,6 @@ def resistance(df1, candle, days_before1, days_after1): #days_before, days_after
 
 # resistance(df, 30, 3, 5)
 
-
 # dfpl = df[0:250]
 # import plotly.graph_objects as go
 # from datetime import datetime

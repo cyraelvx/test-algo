@@ -20,10 +20,10 @@ pio.renderers.default = "browser"
 ticker_symbol = 'COST'
 ticker = yfinance.Ticker(ticker_symbol)
 
-start_date = '2019-05-01'
+start_date = '2022-02-14'
 end_date = '2022-06-14'
 
-df = ticker.history(interval='1d', start=start_date, end=end_date)
+df = ticker.history(interval='1h', start=start_date, end=end_date)
 
 df['Date'] = pd.to_datetime(df.index)
 
@@ -38,6 +38,7 @@ df.reset_index(drop=True, inplace=True)
 min_price = df.Low.min()
 max_price = df.High.max()
 list_prices = []
+list_all_touches = []
 for price in range(int(min_price),int(max_price)):
 
     price_counter = 0
@@ -50,6 +51,7 @@ for price in range(int(min_price),int(max_price)):
         if (price >= row['Low']) & (price <= row['High']):
             ind_counter = 1
             price_counter = price_counter + 1
+            list_all_touches.append((ind, price, price_counter))
 
         if ind > (first_ind + 300):
             break
@@ -77,6 +79,7 @@ while (1):
     # print(list_prices[c][0])
     # print(list_prices[c][1])
     number_of_touch = list_prices[c][1]
+    print()
     if (number_of_touch >= 6) & (number_of_touch <= 9):
         fig.add_shape(type='line', x0=0, y0=list_prices[c][0],
                       x1=e,
@@ -84,5 +87,20 @@ while (1):
                       line=dict(color="RoyalBlue",width=1)
                       )
     c+=1
+
+# c=0
+# while (1):
+#     if (c > len(list_all_touches) - 1):
+#         break
+#     number_of_touch = list_all_touches[c][2]
+#     if (number_of_touch >= 6) & (number_of_touch <= 9):
+#         fig.add_shape(type='line', x0=list_all_touches[c][0], y0=list_all_touches[c][1],
+#                       x1=list_all_touches[c][0],
+#                       y1=list_all_touches[c][1]+1,
+#                       line=dict(color="purple", width=2)
+#                       )
+#
+#     c+=1
+
 
 fig.show()
