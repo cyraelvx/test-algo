@@ -29,14 +29,16 @@ def insert_levels(df, step_between_prices=1):
     dict_prices_touches = {}
     list_df = []
 
-    for price in range(min_price, max_price):
+    for price in range(min_price, max_price):  # iterate over all prices from min to max
         dict_prices_touches[price] = []
-        for ind, row in df.iterrows():
+        for ind, row in df.iterrows():         # for each level of price iterate over all candles and count touches
             # print(ind, row)
+            # if a price is between candle low and high values then we count as touch
             if row['Low'] <= price <= row['High']:
                 date = str(row['Date'])
                 current_num_of_touches = len(dict_prices_touches[price])
                 if current_num_of_touches >= 3:
+                    print(price, current_num_of_touches, dict_prices_touches[price], date)
                     list_df.append([price, current_num_of_touches, dict_prices_touches[price], date])
                 dict_prices_touches[price].append(date)
                 # print(price, current_num_of_touches, dict_prices_touches[price])
