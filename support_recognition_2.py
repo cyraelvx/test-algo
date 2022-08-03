@@ -127,7 +127,6 @@ def print_list_of_lines(list1):
                       )
         c += 1
 
-
 print_list_of_lines(list1=list_prices_to_print)
 fig.show()
 
