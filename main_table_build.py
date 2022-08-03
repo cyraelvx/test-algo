@@ -1,5 +1,7 @@
 import pandas as pd
 import yfinance
+import plotly.io as pio
+pio.renderers.default = "browser"
 import plotly.graph_objects as go
 import numpy as np
 import matplotlib.dates as mpl_dates
@@ -8,6 +10,12 @@ from datetime import datetime
 
 
 def print_list_of_lines(df,df2):
+    fig = go.Figure(data=[go.Candlestick(x=df.index,
+                                         open=df['Open'],
+                                         high=df['High'],
+                                         low=df['Low'],
+                                         close=df['Close'])])
+
     # plot last list
     list1 = df2['price'].unique().tolist()
     c = 0
@@ -25,7 +33,7 @@ def print_list_of_lines(df,df2):
                       )
 
         c += 1
-
+    fig.show()
 
 
 def download_stock_data(ticker_name, start_date, end_date, interval):
@@ -99,62 +107,7 @@ def insert_levels(df, min_distance_between_touches,step_between_prices=1):
 
 df_tsla = download_stock_data(ticker_name='TSLA', start_date='2021-02-14', end_date='2021-06-14', interval='1h')
 df = insert_levels(df_tsla,min_distance_between_touches=4)
-df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=10,min_number_of_touches=4)
+df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=5,min_number_of_touches=4)
 
 # plot
-# fig = go.Figure(data=[go.Candlestick(x=df_tsla.index,
-#                                      open=df_tsla['Open'],
-#                                      high=df_tsla['High'],
-#                                      low=df_tsla['Low'],
-#                                      close=df_tsla['Close'])])
-#
-# list1 = df_levels['price'].unique().tolist()
-# c = 0
-# # print(len(list1))
-# while c <= len(list1) - 1:
-#     # print(list_prices[c][0])
-#     # print(list_prices[c][1])
-#     # number_of_touch = list1[c][1]
-#     # print()
-#
-#     fig.add_shape(type='line', x0=0, y0=list1[c],
-#                   x1=len(df),
-#                   y1=list1[c],
-#                   line=dict(color="RoyalBlue", width=1)
-#                   )
-#
-#     c += 1
-#
-# fig.show()
-s = 0
-e = len(df_tsla)
-dfpl = df_tsla[s:e]
-import plotly.graph_objects as go
-from datetime import datetime
-import matplotlib.pyplot as plt
-
-fig = go.Figure(data=[go.Candlestick(x=dfpl.index,
-                open=dfpl['Open'],
-                high=dfpl['High'],
-                low=dfpl['Low'],
-                close=dfpl['Close'])])
-fig.show()
-# list1 = df_levels['price'].unique().tolist()
-# def print_list_of_lines(list1):
-#     # plot last list
-#     c = 0
-#     while c <= len(list1) - 1:
-#         # print(list_prices[c][0])
-#         # print(list_prices[c][1])
-#         # number_of_touch = list1[c][1]
-#         # print()
-#
-#         fig.add_shape(type='line', x0=0, y0=list1[c],
-#                       x1=e,
-#                       y1=list1[c],
-#                       line=dict(color="RoyalBlue", width=1)
-#                       )
-#         c += 1
-#
-# print_list_of_lines(list1=list1)
-# fig.show()
+print_list_of_lines(df_tsla,df_levels)
