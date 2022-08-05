@@ -21,10 +21,6 @@ def print_list_of_lines(df,df2):
     c = 0
     #print(len(list1))
     while c <= len(list1) - 1:
-        # print(list_prices[c][0])
-        # print(list_prices[c][1])
-        # number_of_touch = list1[c][1]
-        # print()
 
         fig.add_shape(type='line', x0=0, y0=list1[c],
                       x1=len(df),
@@ -48,13 +44,39 @@ def download_stock_data(ticker_name, start_date, end_date, interval):
 
 
 def check_last_date_touch(now_ind,last_ind,min_distance_between_touches):
+    """
+    this function check if a touch is close to the last touch
+    :param now_ind: current index
+    :param last_ind: last touch index
+    :param min_distance_between_touches: the minimum distance between touches as depended in the interval
+    :return: boolean - True or False
+    """
     if (now_ind - last_ind) > min_distance_between_touches:
         return False
     else:
         return True
 
 
+def calculate_change_in_price(price_to_check_after,ind, df, percent_change, interval_time_to_check):
+    price_of_touch = price_to_check_after
+    close_price_column_index = 4
+    price_after_some_time = df.iloc[ind+interval_time_to_check,close_price_column_index] # find the close price after n intervel
+    abs_change_in_price_after_some_time = (np.abs(price_of_touch - price_after_some_time) / price_of_touch ) * 100
+    if (abs_change_in_price_after_some_time > percent_change) & (price_after_some_time > price_of_touch):
+        return abs_change_in_price_after_some_time,price_of_touch,price_after_some_time, 1
+    elif (abs_change_in_price_after_some_time > percent_change) & (price_of_touch > price_after_some_time):
+        return abs_change_in_price_after_some_time, price_of_touch, price_after_some_time, -1
+    else:
+        return abs_change_in_price_after_some_time, price_of_touch, price_after_some_time, 0
+
+
 def drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches,min_number_of_touches):
+    """
+    :param df: the levels df
+    :param max_number_of_touches: maximum number of touches to be accounted as level
+    :param min_number_of_touches: minimum number of touches to be accounted as level
+    :return: final chosen df with levels
+    """
     df_drop = df.copy()
     # first take all prices with high number of touches
     df_max_touch_for_price = pd.DataFrame(df.groupby('price')['current_number_of_touches'].max()).reset_index()
@@ -65,23 +87,30 @@ def drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches,min_num
     return df_to_keep
 
 
-def insert_levels(df, min_distance_between_touches,step_between_prices=1):
+def insert_levels(df_stock,
+                  min_distance_between_touches,
+                  percent_change_calc,
+                  percent_change_interval_to_check,
+                  step_between_prices=1):
     """
     'This function inserts the levels into a dataFrame'
-    :param df: the dataFrame to take the levels from
+    :param percent_change_interval_to_check: define the time after touch to check for percentage of change
+    :param percent_change_calc: which percentage counts as change
+    :param min_distance_between_touches: in order to avoid many close touches
+    :param df_stock: the dataFrame to take the levels from
     :param step_between_prices: default is one
     :return: returns level dataFrame
     """
 
-    min_price = int(df['Low'].min())
-    max_price = int(df['High'].max())
+    min_price = int(df_stock['Low'].min())
+    max_price = int(df_stock['High'].max())
     dict_prices_touches = {}
     list_df = []
 
     for price in range(min_price, max_price):  # iterate over all prices from min to max
         dict_prices_touches[price] = []
         last_ind_touch = 0
-        for ind, row in df.iterrows():         # for each level of price iterate over all candles and count touches
+        for ind, row in df_stock.iterrows():         # for each level of price iterate over all candles and count touches
             time_from_last_ind = check_last_date_touch(ind,last_ind_touch,min_distance_between_touches)
             if time_from_last_ind: # if time from last touch is less then minimum parameter min_distance_between_touches
                 # skip the counting
@@ -90,15 +119,37 @@ def insert_levels(df, min_distance_between_touches,step_between_prices=1):
             # if a price is between candle low and high values then we count as touch
             if row['Low'] <= price <= row['High']:
                 date = str(row['Date'])
-                current_num_of_touches = len(dict_prices_touches[price])
+
+                current_num_of_touches = len(dict_prices_touches[price]) # count the number of touches until now
                 if current_num_of_touches >= 2:
                     # print(price, current_num_of_touches, dict_prices_touches[price], date)
-                    list_df.append([price, current_num_of_touches, dict_prices_touches[price], date])
+                    abs_change_in_price_after_some_time, price_of_touch, price_after_some_time, target = \
+                        calculate_change_in_price(price,ind, df_stock, percent_change_calc,
+                                                  percent_change_interval_to_check)
+
+                    list_df.append([price,
+                                    current_num_of_touches,
+                                    dict_prices_touches[price],
+                                    date,
+                                    abs_change_in_price_after_some_time,
+                                    price_of_touch,
+                                    price_after_some_time,
+                                    target])
                 last_ind_touch = ind
                 dict_prices_touches[price].append(date)
                 # print(price, current_num_of_touches, dict_prices_touches[price])
-    df = pd.DataFrame(list_df, columns=['price', 'current_number_of_touches', 'history', 'prediction'])
-    return df
+
+    list_of_columns_names = ['price',
+                             'current_number_of_touches',
+                             'history',
+                             'prediction',
+                             'abs_change_in_price_after_some_time',
+                             'price_of_touch',
+                             'price_after_some_time',
+                             'target']
+    # make df with all levels
+    df_l = pd.DataFrame(list_df, columns=list_of_columns_names)
+    return df_l
 
 
 # def create_table(df, min_touches_to_define, space_between_touches):
@@ -106,8 +157,8 @@ def insert_levels(df, min_distance_between_touches,step_between_prices=1):
 
 
 df_tsla = download_stock_data(ticker_name='TSLA', start_date='2021-02-14', end_date='2021-06-14', interval='1h')
-df = insert_levels(df_tsla,min_distance_between_touches=4)
-df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=5,min_number_of_touches=4)
+df = insert_levels(df_tsla,min_distance_between_touches=4,percent_change_calc=1,percent_change_interval_to_check=1)
+df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=9,min_number_of_touches=4)
 
 # plot
 print_list_of_lines(df_tsla,df_levels)
