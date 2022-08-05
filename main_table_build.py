@@ -57,17 +57,34 @@ def check_last_date_touch(now_ind,last_ind,min_distance_between_touches):
         return True
 
 
-def calculate_change_in_price(price_to_check_after,ind, df, percent_change, interval_time_to_check):
-    price_of_touch = price_to_check_after
-    close_price_column_index = 4
-    price_after_some_time = df.iloc[ind+interval_time_to_check,close_price_column_index] # find the close price after n intervel
-    abs_change_in_price_after_some_time = (np.abs(price_of_touch - price_after_some_time) / price_of_touch ) * 100
-    if (abs_change_in_price_after_some_time > percent_change) & (price_after_some_time > price_of_touch):
-        return abs_change_in_price_after_some_time,price_of_touch,price_after_some_time, 1
-    elif (abs_change_in_price_after_some_time > percent_change) & (price_of_touch > price_after_some_time):
-        return abs_change_in_price_after_some_time, price_of_touch, price_after_some_time, -1
+def get_min_max_local_to_touch(price_of_touch_t,df_t,ind_t,interval_time):
+    local_df = df_t.iloc[ind_t+1:ind_t+interval_time]
+    local_max = local_df['High'].max()
+    high_d = np.abs(local_max - price_of_touch_t)
+    local_min = local_df['Low'].min()
+    low_d = np.abs(local_min - price_of_touch_t)
+    if high_d > low_d:
+        return local_max
     else:
-        return abs_change_in_price_after_some_time, price_of_touch, price_after_some_time, 0
+        return local_min
+
+
+def calculate_change_in_price(price_to_check_after,ind, df, percent_change, interval_time_to_check):
+    if (ind + interval_time_to_check) >= len(df):
+        return False,False,False,0
+
+    price_of_touch = price_to_check_after
+    close_price_column_index = 3
+
+    # the most farthest value from price in the interval frame
+    farthest_price_after_some_time = get_min_max_local_to_touch(price_of_touch,df,ind,interval_time_to_check)
+    abs_change_in_price_after_some_time = (np.abs(price_of_touch - farthest_price_after_some_time) / price_of_touch ) * 100
+    if (abs_change_in_price_after_some_time > percent_change) & (farthest_price_after_some_time > price_of_touch):
+        return abs_change_in_price_after_some_time,price_of_touch,farthest_price_after_some_time, 1
+    elif (abs_change_in_price_after_some_time > percent_change) & (price_of_touch > farthest_price_after_some_time):
+        return abs_change_in_price_after_some_time, price_of_touch, farthest_price_after_some_time, -1
+    else:
+        return abs_change_in_price_after_some_time, price_of_touch, farthest_price_after_some_time, 0
 
 
 def drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches,min_number_of_touches):
@@ -142,7 +159,7 @@ def insert_levels(df_stock,
     list_of_columns_names = ['price',
                              'current_number_of_touches',
                              'history',
-                             'prediction',
+                             'prediction_time',
                              'abs_change_in_price_after_some_time',
                              'price_of_touch',
                              'price_after_some_time',
@@ -156,9 +173,9 @@ def insert_levels(df_stock,
 #     if
 
 
-df_tsla = download_stock_data(ticker_name='TSLA', start_date='2021-02-14', end_date='2021-06-14', interval='1h')
-df = insert_levels(df_tsla,min_distance_between_touches=4,percent_change_calc=1,percent_change_interval_to_check=1)
+df_tsla = download_stock_data(ticker_name='TSLA', start_date='2021-01-14', end_date='2022-07-14', interval='1h')
+df = insert_levels(df_tsla,min_distance_between_touches=4,percent_change_calc=3,percent_change_interval_to_check=5)
 df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=9,min_number_of_touches=4)
-
+print(df_levels['target'].value_counts())
 # plot
-print_list_of_lines(df_tsla,df_levels)
+# print_list_of_lines(df_tsla,df_levels)
