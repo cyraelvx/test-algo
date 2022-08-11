@@ -17,7 +17,7 @@ import plotly.io as pio
 pio.renderers.default = "browser"
 
 # Obtaining historical stock pricing data
-ticker_symbol = 'COST'
+ticker_symbol = 'msft'
 ticker = yfinance.Ticker(ticker_symbol)
 
 start_date = '2021-02-14'
@@ -36,7 +36,7 @@ df.reset_index(drop=True, inplace=True)
 min_price = df.Low.min()
 max_price = df.High.max()
 touches_min = 5
-touches_max = 6
+touches_max = 20
 list_prices = []
 list_prices_type_touches = []
 list_prices_to_print = []
@@ -87,13 +87,13 @@ for price in range(int(min_price), int(max_price)):
                     touch_outside_counter = touch_outside_counter +1
                     # print('touch_outside_counter')
 
-        if ind > (first_ind + 300):
-            break
+        # if ind > (first_ind + 300):
+        #     break
 
     list_prices.append((price, price_counter, ind))
     if (price_counter >= touches_min) & (price_counter <= touches_max):
         list_prices_type_touches.append((price, price_counter, touch_outside_counter, touch_inside_counter))
-        if touch_outside_counter > touch_inside_counter:
+        if touch_outside_counter >= (touch_outside_counter + touch_inside_counter) * 0.45:
             list_prices_to_print.append((price, price_counter, ind))
 
 

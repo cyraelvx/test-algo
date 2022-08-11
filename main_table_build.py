@@ -106,6 +106,7 @@ def drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches,min_num
 
 def insert_levels(df_stock,
                   min_distance_between_touches,
+                  max_distance_before_touch,
                   percent_change_calc,
                   percent_change_interval_to_check,
                   step_between_prices=1):
@@ -175,7 +176,7 @@ def insert_levels(df_stock,
 
 df_tsla = download_stock_data(ticker_name='TSLA', start_date='2021-01-14', end_date='2022-07-14', interval='1h')
 df = insert_levels(df_tsla,min_distance_between_touches=4,percent_change_calc=3,percent_change_interval_to_check=5)
-df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=9,min_number_of_touches=4)
+df_levels = drop_price_with_too_much_or_too_low_touches(df,max_number_of_touches=15,min_number_of_touches=4)
 print(df_levels['target'].value_counts())
 # plot
 # print_list_of_lines(df_tsla,df_levels)
